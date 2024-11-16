@@ -2,18 +2,30 @@
 Author: Daniel
 '''
 import gradio as gr
+import os
+from funaudiowarp import SenseVoiceNode
+from funaudiowarp import CosyVoiceSFTNode
+from funaudio_utils.download_models import ModelDownloader
+
+base_path = os.path.dirname(os.path.abspath(__file__))
+model_downloader = ModelDownloader(os.path.join(base_path, "models"))
 
 sft_spk_list = ['中文女', '中文男', '日语男', '粤语女', '英文女', '英文男', '韩语女']
 def get_text_by_sensevoice(audio_input, use_fast_model, punc_segment):
     '''
     调用SenseVoice的语音识别接口
     '''
-    print(f'audio_input={audio_input}, use_fast_model={use_fast_model}, punc_segment={punc_segment}') 
+    #print(f'audio_input={audio_input}, use_fast_model={use_fast_model}, punc_segment={punc_segment}')
+    sensevoice_node = SenseVoiceNode(base_path, model_downloader)
+    return sensevoice_node.generate(audio_input, use_fast_model, punc_segment)
 def create_voice_by_predefined(tts_text, predefined_model, speed_input, seed, use_25hz_flag):
     '''
     调用CosyVoice的预定义模型生成语音
     '''
-    print(f'tts_text={tts_text}, predefined_model={predefined_model}, speed_input={speed_input}, seed={seed}, use_25hz_flag={use_25hz_flag}')
+    #print(f'tts_text={tts_text}, predefined_model={predefined_model}, speed_input={speed_input}, seed={seed}, use_25hz_flag={use_25hz_flag}')
+    cosyvoice_sft_node = CosyVoiceSFTNode(base_path, model_downloader)
+    output = cosyvoice_sft_node.generate(tts_text, predefined_model, float(speed_input), int(seed), use_25hz_flag)
+    return output
 def create_voice_by_natural_lang(tts_text_for_natural_lang, instruct_text, predefined_model, speed_input, seed):
     '''
     调用CosyVoice的预定义模型和指令文本生成语音
@@ -46,7 +58,7 @@ def sensevoice_layout():
             audio_input = gr.Audio(label='源音频文件')
         with gr.Group():
             use_fast_model = gr.Checkbox(label='使用快速模型', value=False)
-            punc_segment = gr.Checkbox(label='添加标点符号', value=False)
+            punc_segment = gr.Checkbox(label='添加标点符号', value=True)
     
     return audio_input, use_fast_model, punc_segment
                                  
@@ -152,7 +164,7 @@ def app_launcher():
                     audio_input, use_fast_model, punc_segment = sensevoice_layout()
                     get_text_btn = gr.Button('识别')
                 with gr.Column():
-                    text_ouput = gr.Textbox(label='识别结果')
+                    text_ouput = gr.TextArea(label='识别结果', lines=7, show_label=True, show_copy_button=True)
 
         with gr.Tab('语音生成'):
             gr.Markdown('''

@@ -28,7 +28,8 @@ class FunAudioLLMTool:
     
     def audio_resample(self, waveform, source_sr):
         waveform = waveform.squeeze(0)
-        speech = waveform.mean(dim=0,keepdim=True)
+        #speech = waveform.mean(dim=0,keepdim=True)
+        speech = waveform.float().mean(dim=0,keepdim=True)
         if source_sr != self.prompt_sr:
             speech = torchaudio.transforms.Resample(orig_freq=source_sr, new_freq=self.prompt_sr)(speech)
         return speech

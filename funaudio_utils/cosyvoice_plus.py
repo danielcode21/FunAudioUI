@@ -6,6 +6,7 @@ LastEditors: SpenserCai
 LastEditTime: 2024-10-04 16:07:20
 Description: file content
 '''
+#from cosyvoice.cli.cosyvoice import CosyVoice
 from cosyvoice.cli.cosyvoice import CosyVoice
 from cosyvoice.utils.file_utils import logging
 from tqdm import tqdm
