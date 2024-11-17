@@ -44,11 +44,13 @@ def generate_seed():
 
 
 def postprocess(speech, top_db=60, hop_length=220, win_length=440):
+    print(f'\n--\nspeech (before)= {speech.shape}\n----\n')
     speech, _ = librosa.effects.trim(
         speech, top_db=top_db,
         frame_length=win_length,
         hop_length=hop_length
     )
+    print(f'\n--\nspeech = {speech.shape}\n----\n')
     if speech.abs().max() > max_val:
         speech = speech / speech.abs().max() * max_val
     speech = torch.concat([speech, torch.zeros(1, int(target_sr * 0.2))], dim=1)
@@ -121,6 +123,7 @@ def generate_audio(tts_text, mode_checkbox_group, sft_dropdown, prompt_text, pro
             yield (target_sr, i['tts_speech'].numpy().flatten())
     elif mode_checkbox_group == '跨语种复刻':
         logging.info('get cross_lingual inference request')
+        print(f'\n-------\nprompt_wav= {prompt_wav}\n-----\n')
         prompt_speech_16k = postprocess(load_wav(prompt_wav, prompt_sr))
         set_all_random_seed(seed)
         for i in cosyvoice.inference_cross_lingual(tts_text, prompt_speech_16k, stream=stream, speed=speed):
