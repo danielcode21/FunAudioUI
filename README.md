@@ -9,3 +9,5 @@ requirements.txt目前还没有确认，基本是照搬**ComfyUI0FunAudioLLM**�
 2. 进入clone的目录，安装python虚拟环境
 3. 安装requirements.txt
 4. 运行：python app.py
+
+补充:初次使用某个功能时会从网上下载模型（我用的是参考项目的代码，看起来是从[modelscope 魔搭](https://www.modelscope.cn/)下载的），都下载下来就很占流量和空间了。
