@@ -24,6 +24,7 @@ class SenseVoiceNode:
         self.__base_path = base_path
         self.__model_downloader = model_downloader
         self.__prompt_sr = 16000
+
     def __patch_emoji(self, emoji_dict):
         t_emoji_dict_key = emoji_dict.keys()
         emoji_dict_new = {}
@@ -47,21 +48,9 @@ class SenseVoiceNode:
 
     def generate(self, audio, use_fast_mode, punc_segment):
         sensevoice_code_path = os.path.join(self.__base_path,"funaudiollm/sensevoice/model.py")
-        #print(f'sensevoice_code_path={sensevoice_code_path}')
-        #print(audio)
     
         if isinstance(audio, tuple):
             speech = self.__audio_resampling(audio)
-        # if isinstance(audio, tuple):
-        #     fs, speech = audio
-        #     speech = speech.astype(np.float32) / np.iinfo(np.int16).max
-        #     if len(speech.shape) > 1:
-        #         speech = speech.mean(-1)
-        #     if fs != self.__prompt_sr :
-        #         print(f"audio_fs: {fs}")
-        #         resampler = torchaudio.transforms.Resample(fs, self.__prompt_sr )
-        #         speech_t = torch.from_numpy(speech).to(torch.float32)
-        #         speech = resampler(speech_t[None, :])[0, :].numpy()
 
         # 判断语音长度是否大于30s
         if speech.shape[0] > 30 * 22050 and use_fast_mode:

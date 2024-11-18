@@ -18,7 +18,6 @@ def get_text_by_sensevoice(audio_input, use_fast_model, punc_segment):
     '''
     调用SenseVoice的语音识别接口
     '''
-    #print(f'audio_input={audio_input}, use_fast_model={use_fast_model}, punc_segment={punc_segment}')
     sensevoice_node = SenseVoiceNode(base_path, model_downloader)
     return sensevoice_node.generate(audio_input, use_fast_model, punc_segment)
 
@@ -58,7 +57,6 @@ def create_voice_model(sample_audio, speaker_model_name, speaker_model_dir, tts_
     '''
     生成语音克隆模型
     '''
-    print(f'sample_audio={sample_audio}, tts_text={tts_text}, prompt_text={prompt_text}, speed_input={speed_input}, seed={seed}, use_25hz_flag={use_25hz_flag}')
     cosyvoice_speaker_create_node = CosyVoiceSpeakerCreaterNode(base_path, model_downloader)
     output = cosyvoice_speaker_create_node.generate(sample_audio, tts_text, prompt_text, speaker_model_name, speaker_model_dir, float(speed_input), int(seed), use_25hz_flag)
     return output
