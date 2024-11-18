@@ -215,7 +215,7 @@ class CosyVoiceSpeakerCreaterNode(CosyVoiceNode):
         t0 = ttime()
         _, model_dir = self._model_downloader.download_cosyvoice_300m(use_25hz)
         cosyvoice = CosyVoicePlus(model_dir)
-        assert len(prompt_text) > 0, "prompt文本为空，您是否忘记输入prompt文本？"
+        assert len(prompt_text) > 0, 'prompt text is empty. Do you forget to input prompt text?'
         speech = load_wav(audio, self._prompt_sr)
         prompt_speech_16k = self._postprocess(speech)
         #print('get zero_shot inference request')
