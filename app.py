@@ -14,13 +14,27 @@ speaker_path = os.path.join(model_path, 'Speaker')
 model_downloader = ModelDownloader(model_path)
 
 sft_spk_list = ['中文女', '中文男', '日语男', '粤语女', '英文女', '英文男', '韩语女']
+
+instruct_list = [
+    ["Selene 'Moonshade', is a mysterious, elegant dancer with a connection to the night. Her movements are both mesmerizing and deadly."],
+    ["A female speaker with normal pitch, slow speaking rate, and sad emotion."],
+    ["Priya, the humanitarian doctor, heals wounds of the world with her boundless empathy and skill."],
+    ["Zara \"Wildfire, is an impulsive, fearless firebrand who loves a challenge. Her bravery inspires others, though she often acts recklessly."],
+    ["Kai'Torrent, is a cool-headed, tactical water mage who plans his moves carefully. A soothing presence with hidden depths."],
+    ["Kai'Torrent, is a cool-headed, tactical water mage who plans his moves carefully. A soothing presence with hidden depths."],
+    ["Ivan, the old sea captain, navigates life's storms with timeless wisdom and a heart of gold."]
+]
+
+natural_txt_list = [
+    ['在面对挑战时，他展现了非凡的<strong>勇气</strong>与<strong>智慧</strong>。']
+]
+
 def get_text_by_sensevoice(audio_input, use_fast_model, punc_segment):
     '''
     调用SenseVoice的语音识别接口
     '''
     sensevoice_node = SenseVoiceNode(base_path, model_downloader)
-    return sensevoice_node.generate(audio_input, use_fast_model, punc_segment)
-
+    return sensevoice_node.generate(audio_input, use_fast_model, punc_segment),
 def create_voice_by_pretrained(tts_text, predefined_model, speed_input, seed, use_25hz_flag):
     '''
     调用CosyVoice的预定义模型生成语音
@@ -72,18 +86,15 @@ def common_param_layout():
     '''
     通用的参数布局
     '''
-    with gr.Column('CosyVoice克隆模型'):
-        with gr.Row():
-            with gr.Column():
-                speed_input = gr.Slider(label="语速", minimum=0.5, maximum=2.0, step=0.1, value=1.0, min_width=100)
-            with gr.Group():
-                with gr.Column():
-                    seed = gr.Number(label='随机种子', value=generate_seed(),  min_width=100)
-                with gr.Column():
-                    seed_btn = gr.Button("🎲", min_width=20)
-            
-        with gr.Row():
-            use_25hz_flag = gr.Checkbox(label='使用25Hz采样率', value=False)
+    with gr.Row():
+        speed_input = gr.Slider(label="语速", minimum=0.5, maximum=2, step=0.1, value=1.0)
+    
+    with gr.Row(elem_id="seed-row"):  # Add an ID to the row for styling
+        seed_btn = gr.Button("🎲", scale=0)
+        seed = gr.Number(value=generate_seed(), show_label=False, scale=1)
+        
+    with gr.Row():
+        use_25hz_flag = gr.Checkbox(label='使用25Hz采样率', value=False)
 
     seed_btn.click(
         fn=generate_seed,
@@ -91,18 +102,15 @@ def common_param_layout():
         outputs=[seed]
     )
 
-    return speed_input, seed, seed_btn, use_25hz_flag
+    return speed_input, seed, use_25hz_flag
  
 def sensevoice_layout():
     '''
     SenseVoice节点布局
     '''
-    with gr.Column('SenseVoice'):
-        with gr.Group():
-            audio_input = gr.Audio(label='源音频文件')
-        with gr.Group():
-            use_fast_model = gr.Checkbox(label='使用快速模型', value=False)
-            punc_segment = gr.Checkbox(label='添加标点符号', value=True)
+    audio_input = gr.Audio(label='源音频文件')
+    use_fast_model = gr.Checkbox(label='使用快速模型', value=False)
+    punc_segment = gr.Checkbox(label='添加标点符号', value=True)
     
     return audio_input, use_fast_model, punc_segment
                                  
@@ -110,45 +118,47 @@ def cosyvoice_pretrained_model_node():
     '''
     CosyVoice预定义模型的节点布局
     '''
-    with gr.Column('CosyVoice预定义模型'):
-        with gr.Group():
-            tts_text = gr.TextArea(label='TTS文本',lines=5)
-        with gr.Group():
-            predefined_model = gr.Dropdown(choices=sft_spk_list, label='预定义角色模型', value='中文女')
-            speed_input, seed, seed_btn, use_25hz_flag = common_param_layout()
+    tts_text = gr.TextArea(label='TTS文本（合成文本）',lines=5)
+    predefined_model = gr.Dropdown(choices=sft_spk_list, label='预训练模型', value='中文女')
+    speed_input, seed, use_25hz_flag = common_param_layout()
    
-    return tts_text, predefined_model, speed_input, seed, seed_btn, use_25hz_flag
+    return tts_text, predefined_model, speed_input, seed, use_25hz_flag
 
 def cosyvoice_natural_lang_control_node():
     '''
     CosyVoice自然语言控制节点布局
     '''
-    with gr.Column('CosyVoice自然语言控制'):
-        with gr.Group():
-            tts_text = gr.TextArea(label='TTS文本',lines=5)
-        with gr.Group():
-            instruct_text = gr.TextArea(label='Instruct文本',lines=3)
-        with gr.Group():
-            predefined_model = gr.Dropdown(choices=sft_spk_list, label='预定义角色模型', value='中文女')
-            speed_input, seed, seed_btn, _ = common_param_layout()
+    with gr.Row():
+        tts_text = gr.TextArea(label='TTS文本（合成文本）',lines=5)
+    with gr.Row():
+        gr.Examples(
+            examples = natural_txt_list,
+            inputs=[tts_text]
+        )
+    with gr.Row():
+        instruct_text = gr.TextArea(label='Instruct文本（描述语音状态）',lines=3)
+    with gr.Row():
+        gr.Examples(
+            examples = instruct_list,
+            inputs=[instruct_text]
+        )
     
-    return tts_text, instruct_text, predefined_model, speed_input, seed, seed_btn
+    with gr.Row():
+        predefined_model = gr.Dropdown(choices=sft_spk_list, label='预训练模型', value='中文女')
+    
+    speed_input, seed, _ = common_param_layout()
+    
+    return tts_text, instruct_text, predefined_model, speed_input, seed
 
 def cosyvoice_dual_lang_clone_node():
     '''
     CosyVoice跨语言克隆节点布局
     '''
-    with gr.Column('CosyVoice跨语言克隆'):
-        with gr.Group():
-            sample_audio = gr.Audio(label='采样音频文件', type='filepath')
-        
-        with gr.Group():
-            tts_text = gr.TextArea(label='TTS文本',lines=5)
-        
-        with gr.Group():
-            speed_input, seed, seed_btn, use_25hz_flag = common_param_layout()
+    sample_audio = gr.Audio(label='音频文件（样例音频）', type='filepath')
+    tts_text = gr.TextArea(label='TTS文本（合成文本）',lines=5)
+    speed_input, seed, use_25hz_flag = common_param_layout()
     
-    return sample_audio, tts_text, speed_input, seed, seed_btn, use_25hz_flag
+    return sample_audio, tts_text, speed_input, seed, use_25hz_flag
 
 def cosyvoice_fast_clone_node(mode):
     '''
@@ -160,130 +170,100 @@ def cosyvoice_fast_clone_node(mode):
     else:
         file_hide = True
 
-    with gr.Column('CosyVoice快速克隆'):
-        with gr.Group():
-            tts_text = gr.TextArea(label='TTS文本',lines=3)
-
-        with gr.Group():
-            prompt_text = gr.TextArea(label='Prompt文本',lines=3, visible=file_hide)
-
-        with gr.Group():
-            speaker_model_name = gr.Textbox(label='语音模型名称')
-            speaker_model_dir = gr.Textbox(label='语音模型目录', value=speaker_path)
-        
-        with gr.Group():
-            sample_audio = gr.Audio(label='采样音频文件', type='filepath', visible=file_hide)
-
-        with gr.Group():
-            speed_input, seed, seed_btn, use_25hz_flag = common_param_layout()
+    tts_text = gr.TextArea(label='TTS文本（合成文本）',lines=3)
+    prompt_text = gr.TextArea(label='Prompt文本（样例音频文本）',lines=3, visible=file_hide)
+    speaker_model_name = gr.Textbox(label='语音模型名称')
+    speaker_model_dir = gr.Textbox(label='语音模型目录', value=speaker_path)
+    sample_audio = gr.Audio(label='采样音频文件（样例音频）', type='filepath', visible=file_hide)
+    speed_input, seed, use_25hz_flag = common_param_layout()
     
-        return sample_audio, speaker_model_name, speaker_model_dir, tts_text, prompt_text, speed_input, seed, seed_btn, use_25hz_flag
+    return sample_audio, speaker_model_name, speaker_model_dir, tts_text, prompt_text, speed_input, seed, use_25hz_flag
 
 def app_launcher():
     '''
     主界面布局
     '''
     
-    with gr.Blocks() as app:
+    with gr.Blocks(fill_height=True) as app:
         gr.Markdown('''
         # 👋 FunAudioLLM TTS工具
         ''')
 
         with gr.Tab('语音识别'):
             gr.Markdown('''
-            使用SenseVoice识别音频，提取文字。
-            step1. 上传音频文件；
-            step2. 设置参数；
+            ### 使用SenseVoice识别音频，提取文字。
+            step1. 上传音频文件；<br/>
+            step2. 设置参数；<br/>
             step3. 点击识别按钮，提取文字。
             ''')
-            with gr.Row():
-                with gr.Column():
-                    audio_input, use_fast_model, punc_segment = sensevoice_layout()
-                    get_text_btn = gr.Button('识别')
-                with gr.Column():
-                    text_ouput = gr.TextArea(label='识别结果', lines=9, show_label=True, show_copy_button=True)
+            audio_input, use_fast_model, punc_segment = sensevoice_layout()
+            get_text_btn = gr.Button('识别')
+            text_ouput = gr.TextArea(label='识别结果', lines=9, show_label=True, show_copy_button=True)
 
         with gr.Tab('语音生成(预训练模型)'):
             gr.Markdown('''
-            使用CosyVoice的预训练模型生成语音。
-            step1. 输入TTS文本；
-            step2. 选择预训练的角色模型；
-            step3. 设置语速等参数；
+            ### 使用CosyVoice的预训练模型生成语音。
+            step1. 输入TTS文本；<br/>
+            step2. 选择预训练的角色模型；<br/>
+            step3. 设置语速等参数；<br/>
             step4. 点击生成按钮，生成语音。
             ''')
-            with gr.Row():
-                with gr.Column():
-                    tts_text_for_predefined, predefined_model, speed_input, seed, seed_btn, use_25hz_flag = cosyvoice_pretrained_model_node()
-                    create_voice_by_predefined_btn = gr.Button('生成')
-                with gr.Column():
-                    voice_predefined = gr.Audio(label='生成语音')
+            tts_text_for_predefined, predefined_model, speed_input, seed, use_25hz_flag = cosyvoice_pretrained_model_node()
+            create_voice_by_predefined_btn = gr.Button('生成')
+            voice_predefined = gr.Audio(label='生成语音')
 
         with gr.Tab('自然语言控制语音生成'):
             gr.Markdown('''
-            使用CosyVoice的预训练模型生成语音。
-            step1. 输入TTS文本；
-            step2. 输入Instruct文本，用于描述角色的说话特点；
-            step3. 选择预训练的角色模型；
-            step4. 设置语速等参数；
+            ### 使用CosyVoice的预训练模型生成语音。
+            step1. 输入TTS文本。目前支持的指令&lt;laughter&gt;&lt;/laughter&gt;&lt;strong&gt;&lt;/strong&gt;[laughter][breath]；<br/>
+            step2. 输入Instruct文本，用于描述语音的状态，如；A female speaker with normal pitch, slow speaking rate, and sad emotion.<br/>
+            step3. 选择预训练的模型；<br/>
+            step4. 设置语速等参数；<br/>
             step5. 点击生成按钮，生成语音。
             ''')
-            with gr.Row():
-                with gr.Column():
-                    tts_text_for_natural_lang, instruct_text, predefined_model2, speed_input2, seed2, seed_btn2 = cosyvoice_natural_lang_control_node()
-                    create_voice_by_natural_lang_btn = gr.Button('生成')
-                with gr.Column():
-                    voice_natural = gr.Audio(label='生成语音')
-        
+            tts_text_for_natural_lang, instruct_text, predefined_model2, speed_input2, seed2 = cosyvoice_natural_lang_control_node()
+            create_voice_by_natural_lang_btn = gr.Button('生成')
+            voice_natural = gr.Audio(label='生成语音')
+    
         with gr.Tab('跨语种语音生成'):
             gr.Markdown('''
-            使用采样音频和CosyVideo预定义模型生成语音。
-            step1. 上传音频文件，确定音色；
-            step2. 输入TTS文本；
-            step3. 设置语速等参数；
+            ### 使用采样音频和CosyVideo预定义模型生成语音。
+            step1. 上传音频文件，确定音色；<br/>
+            step2. 输入TTS文本；<br/>
+            step3. 设置语速等参数；<br/>
             step4. 点击生成按钮，生成语音。
             ''')
-            with gr.Row():
-                with gr.Column():
-                    sample_audio3, tts_text_for_dual_lang, speed_input3, seed3, seed_btn3, use_25hz_flag3 = cosyvoice_dual_lang_clone_node()
-                    create_voice_by_dual_lang_btn = gr.Button('生成')
-                with gr.Column():
-                    voice_dual_lang = gr.Audio(label='生成语音')
+            sample_audio3, tts_text_for_dual_lang, speed_input3, seed3, use_25hz_flag3 = cosyvoice_dual_lang_clone_node()
+            create_voice_by_dual_lang_btn = gr.Button('生成')
+            voice_dual_lang = gr.Audio(label='生成语音')
 
         mode = 'model'
         with gr.Tab('语音模型语音生成'):
             gr.Markdown('''
-            通过CosyVoice，使用自训练的语音模型生成语音。
-            step1. 输入TTS文本；
-            step2. 输入模型的名称和目录；
-            step3. 设置语速等参数；
+            ### 通过CosyVoice，使用自训练的语音模型生成语音。
+            step1. 输入TTS文本；<br/>
+            step2. 输入模型的名称和目录；<br/>
+            step3. 设置语速等参数；<br/>
             step4. 点击生成按钮，生成语音。
             ''')
-            with gr.Row():
-                with gr.Column():
-                    speaker_audio4, speaker_model_name, speaker_model_dir, tts_text4, prompt_text4, speed_input4, seed4, seed_btn4, use_25hz_flag4 = cosyvoice_fast_clone_node(mode)
-                    create_voice_by_cloned_model_btn = gr.Button("生成")
-
-                with gr.Column():
-                    cloned_voice = gr.Audio(label="生成语音")
+            speaker_audio4, speaker_model_name, speaker_model_dir, tts_text4, prompt_text4, speed_input4, seed4, use_25hz_flag4 = cosyvoice_fast_clone_node(mode)
+            create_voice_by_cloned_model_btn = gr.Button("生成")
+            cloned_voice = gr.Audio(label="生成语音")
 
         mode = 'file'
         with gr.Tab('语音克隆模型'):
             gr.Markdown('''
-            使用CosyVoice生成语音克隆模型。
-            step1. 输入TTS文本，用于生成模型的测试语音；
-            step2. 输入Prompt文本，这个需要和step3上传的音频文件内容一致；
-            step3. 上传音频文件，是用于生成模型的源音频；
-            step4. 设置语速等参数；
+            ### 使用CosyVoice生成语音克隆模型。
+            step1. 输入TTS文本，用于生成模型的测试语音；<br/>
+            step2. 输入Prompt文本，这个需要和step3上传的音频文件内容一致；<br/>
+            step3. 上传音频文件，是用于生成模型的源音频；<br/>
+            step4. 设置语速等参数；<br/>
             step5. 点击生成按钮，生成模型和测试语音。
             ''')
-            with gr.Row():
-                with gr.Column():
-                    sample_audio5, speaker_model_name5, speaker_model_dir5, tts_text5, prompt_text5, speed_input5, seed5, seed_btn5, use_25hz_flag5 = cosyvoice_fast_clone_node(mode)
-                    create_voice_model_btn = gr.Button("生成")
-
-                with gr.Column():
-                    voice_output6 = gr.Audio(label="生成语音")
-                    voice_model6 = gr.File(label="生成语音模型")
+            sample_audio5, speaker_model_name5, speaker_model_dir5, tts_text5, prompt_text5, speed_input5, seed5, use_25hz_flag5 = cosyvoice_fast_clone_node(mode)
+            create_voice_model_btn = gr.Button("生成")
+            voice_output6 = gr.Audio(label="生成语音")
+            voice_model6 = gr.File(label="生成语音模型")
 
         get_text_btn.click(
             fn=get_text_by_sensevoice,
@@ -320,6 +300,20 @@ def app_launcher():
             inputs=[sample_audio5, speaker_model_name5, speaker_model_dir5, tts_text5, prompt_text5, speed_input5, seed5, use_25hz_flag5],
             outputs=[voice_output6, voice_model6]
         )
+
+        gr.HTML("""
+        <style>
+            #seed-row > * {  /* Style all direct children of the row */
+                display: flex;
+                align-items: center;
+                height: 60px; /* Or whatever height you want */
+            }
+            #seed-row > button { /* Target the button directly */
+                witdh: 30px; /* Prevent button from shrinking */
+                margin-right: -15px; /* Add some space between the button and the input */
+            }
+        </style>
+        """)
 
     return app
 
