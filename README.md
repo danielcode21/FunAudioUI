@@ -13,3 +13,4 @@ requirements.txt目前还没有确认，基本是照搬**ComfyUI0FunAudioLLM**�
 补充:
 1. 初次使用某个功能时会从网上下载模型（我用的是参考项目的代码，看起来是从[modelscope 魔搭](https://www.modelscope.cn/)下载的），都下载下来就很占流量和空间了。
 2. 自然语言生成的指令文本可以参考[官网](https://fun-audio-llm.github.io/#CosyVoice-instructed)和[网友终结](https://note.youdao.com/ynoteshare/index.html?id=aacd7b7c3229a35a4fd6a6a82976eba7&type=note&_time=1732058153538)
+3. 可以使用 python app.py -n 0.0.0.0 -p 8080 指定启动参数
