@@ -4,6 +4,7 @@ Author: Daniel
 import gradio as gr
 import os
 import random
+import argparse
 from funaudiowarp import SenseVoiceNode
 from funaudiowarp import CosyVoiceSFTNode, CosyVoiceNaturalNode, CosyVoiceDualLanglNode, CosyVoiceSpeakerVoiceNode, CosyVoiceSpeakerCreaterNode
 from funaudio_utils.download_models import ModelDownloader
@@ -34,7 +35,8 @@ def get_text_by_sensevoice(audio_input, use_fast_model, punc_segment):
     调用SenseVoice的语音识别接口
     '''
     sensevoice_node = SenseVoiceNode(base_path, model_downloader)
-    return sensevoice_node.generate(audio_input, use_fast_model, punc_segment),
+    return sensevoice_node.generate(audio_input, use_fast_model, punc_segment)
+
 def create_voice_by_pretrained(tts_text, predefined_model, speed_input, seed, use_25hz_flag):
     '''
     调用CosyVoice的预定义模型生成语音
@@ -318,8 +320,14 @@ def app_launcher():
     return app
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--server_name', type=str, help='server name')
+    parser.add_argument('-p', '--server_port', type=int, help='server port')
+
+    args = parser.parse_args()
+
     app = app_launcher()
-    app.launch()
+    app.launch(server_name=args.server_name, server_port=args.server_port)
 
 if __name__ == '__main__':
     main()

@@ -82,7 +82,6 @@ class SenseVoiceNode:
         model = AutoModel(**model_use_arg)
         output = model.generate(**model_arg)
         postprocess_utils.emoji_dict = self.__patch_emoji(postprocess_utils.emoji_dict)
-        
         return postprocess_utils.rich_transcription_postprocess(output[0]["text"])
 
 class CosyVoiceNode:
